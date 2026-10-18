@@ -1,0 +1,244 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111111">
+<title>NOKOSKU — Reseller Panel</title>
+<style>
+:root{color-scheme:dark;--bg:#0b0c0e;--panel:#121417;--line:#272a30;--muted:#9298a3;--white:#f3f4f6;--accent:#c5f36b;--red:#ff7272}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--white);font:14px/1.6 system-ui,-apple-system,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1100px;margin:auto;padding:20px}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line);padding:8px 0 20px}
+.logo{font-size:20px;font-weight:850;letter-spacing:-.8px}
+.logo span{color:var(--accent)}
+.tag{font-size:11px;color:var(--muted);border:1px solid var(--line);padding:4px 8px;border-radius:20px}
+.hero{padding:35px 0 22px}
+.eyebrow{color:var(--accent);font-size:11px;letter-spacing:2px;font-weight:700}
+h1{font-size:clamp(29px,6vw,45px);letter-spacing:-1.8px;line-height:1.1;margin:9px 0}
+p{color:var(--muted)}
+.layout{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:20px;min-width:0}
+h2{font-size:16px;margin:0 0 15px}
+label{display:block;font-size:12px;color:#b9bec7;margin:13px 0 6px}
+input,select{width:100%;background:#0b0c0e;color:var(--white);border:1px solid #30343b;border-radius:9px;padding:12px;outline:none}
+input:focus,select:focus{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#15180d;border:0;border-radius:9px;padding:12px 15px;font-weight:800;width:100%;margin-top:16px}
+button.secondary{background:#202329;color:white;border:1px solid var(--line);border-radius:8px;padding:9px 12px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tabs button{flex:1}
+.note{background:#1b1d20;border:1px solid var(--line);padding:12px;border-radius:9px;color:#b5bbc5;font-size:12px;margin-top:14px}
+.result{margin-top:12px;overflow-wrap:anywhere;font-size:13px}
+.price{font-size:26px;font-weight:800;margin-top:8px}
+.muted{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td,th{text-align:left;padding:10px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600}
+.hidden{display:none!important}
+footer{padding:28px 0;color:var(--muted);font-size:11px}
+@media(max-width:700px){.shell{padding:14px}.layout{grid-template-columns:1fr}.panel{padding:16px}header{align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+  <div class="logo">NOKOS<span>KU.</span></div>
+  <div class="tag">RESELLER PANEL / BETA</div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">DIGITAL SERVICES · 01</div>
+  <h1>Simple. Fast.<br>On your terms.</h1>
+  <p>Panel pemesanan nomor virtual dengan proses pembayaran manual.</p>
+</section>
+
+<div class="tabs">
+  <button class="secondary" onclick="showTab('shop')">Pelanggan</button>
+  <button class="secondary" onclick="showTab('track')">Cek pesanan</button>
+  <button class="secondary" onclick="showTab('admin')">Admin</button>
+</div>
+
+<main id="shop" class="layout">
+<section class="panel">
+<h2>01 / Pilih layanan</h2>
+<label>Nama pelanggan</label>
+<input id="name" maxlength="80" placeholder="Nama kamu">
+<label>Nomor WhatsApp / kontak</label>
+<input id="contact" maxlength="40" placeholder="Kontak untuk pesanan">
+<label>Server</label>
+<select id="server"><option value="plus">Multi provider</option><option value="sh">SMSHub</option><option value="sa">SMS-Activate</option><option value="mn">MonoOTP</option><option value="gz">GrizzlySMS</option></select>
+<button class="secondary" onclick="loadCatalog()">Muat katalog</button>
+<label>Negara</label><select id="country"></select>
+<label>Layanan</label><select id="service"></select>
+<div class="note">Harga final ditentukan server. Nomor baru dipesan setelah pembayaran disetujui admin.</div>
+<button class="primary" onclick="getPrice()">Cek harga</button>
+<div id="pricebox" class="result"></div>
+</section>
+
+<section class="panel">
+<h2>02 / Pembayaran manual</h2>
+<p>Transfer sesuai nominal yang ditampilkan admin. Jangan mengirim data sensitif selain informasi yang diperlukan untuk verifikasi pembayaran.</p>
+<label>Referensi transfer</label>
+<input id="reference" maxlength="100" placeholder="Contoh: transfer pukul 14:20">
+<label>URL bukti transfer HTTPS</label>
+<input id="proof" type="url" placeholder="URL bukti dari storage kamu">
+<label>Harga terverifikasi (Rp)</label>
+<input id="price" type="number" min="1" placeholder="Klik cek harga dahulu">
+<button class="primary" onclick="submitOrder()">Kirim pesanan</button>
+<div id="checkout" class="result" aria-live="polite"></div>
+<div class="note">Status awal menunggu verifikasi admin. Jangan membayar ke rekening yang belum dikonfirmasi melalui kanal resmi kamu.</div>
+</section>
+</main>
+
+<section id="track" class="panel hidden">
+<h2>Cek status pesanan</h2>
+<label>ID pesanan</label><input id="trackid" placeholder="UUID pesanan">
+<label>Kontak saat checkout</label><input id="trackcontact" placeholder="Kontak yang sama">
+<button class="primary" onclick="trackOrder()">Periksa status</button>
+<div id="trackresult" class="result"></div>
+</section>
+
+<section id="admin" class="panel hidden">
+<h2>Admin / Pesanan masuk</h2>
+<p>Token admin hanya dikirim saat memanggil backend. Jangan membagikannya kepada pelanggan.</p>
+<label>Token admin</label><input id="token" type="password" autocomplete="current-password" placeholder="ADMIN_TOKEN">
+<button class="primary" onclick="loadOrders()">Muat pesanan</button>
+<div id="adminresult" class="result"></div>
+</section>
+
+<footer>NOKOSKU RESELLER · Secure server-side API · Pastikan penggunaan nomor sesuai ketentuan penyedia dan aplikasi tujuan.</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let catalog = null;
+let currentPrice = null;
+
+async function api(path, options={}) {
+  const r = await fetch(path, {
+    ...options,
+    headers: {'Content-Type':'application/json', ...(options.headers||{})}
+  });
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok || data.success===false) throw Error(data.error || 'Permintaan gagal');
+  return data;
+}
+
+function showTab(id) {
+  ['shop','track','admin'].forEach(x => $(x).classList.toggle('hidden',x!==id));
+}
+
+async function loadCatalog() {
+  try {
+    $('pricebox').textContent='Memuat katalog...';
+    catalog = await api('/api/catalog?server='+encodeURIComponent($('server').value));
+    $('country').replaceChildren();
+    Object.entries(catalog.countries).forEach(([code,name])=>{
+      const o=document.createElement('option');o.value=code;o.textContent=name;
+      $('country').append(o);
+    });
+    $('service').replaceChildren();
+    Object.entries(catalog.services).forEach(([code,item])=>{
+      const o=document.createElement('option');o.value=code;
+      o.textContent=item.name || code;$('service').append(o);
+    });
+    $('pricebox').textContent='Katalog berhasil dimuat.';
+  } catch(e){$('pricebox').textContent=e.message}
+}
+
+async function getPrice() {
+  try {
+    const p=await api('/api/catalog?server='+encodeURIComponent($('server').value)
+      +'&country='+encodeURIComponent($('country').value)
+      +'&service='+encodeURIComponent($('service').value));
+    currentPrice=p.price;
+    $('price').value=p.price;
+    $('pricebox').textContent='Harga jual: Rp '+Number(p.price).toLocaleString('id-ID')
+      +' · Stok: '+(p.count ?? 'cek provider');
+  } catch(e){$('pricebox').textContent=e.message}
+}
+
+async function submitOrder() {
+  try {
+    if(currentPrice===null) throw Error('Cek harga dahulu.');
+    const data={
+      customer_name:$('name').value,
+      customer_contact:$('contact').value,
+      server_code:$('server').value,
+      country_code:$('country').value,
+      country_name:$('country').selectedOptions[0]?.textContent,
+      service_code:$('service').value,
+      service_name:$('service').selectedOptions[0]?.textContent,
+      price:Number($('price').value),
+      payment_reference:$('reference').value,
+      proof_url:$('proof').value
+    };
+    const result=await api('/api/order',{method:'POST',body:JSON.stringify(data)});
+    $('checkout').textContent='Pesanan dibuat. ID: '+result.order.id+
+      ' · Status: '+result.order.status;
+    $('trackid').value=result.order.id;
+    $('trackcontact').value=data.customer_contact;
+    showTab('track');
+  } catch(e){$('checkout').textContent=e.message}
+}
+
+async function trackOrder() {
+  try {
+    const result=await api('/api/status',{method:'POST',body:JSON.stringify({
+      id:$('trackid').value,contact:$('trackcontact').value
+    })});
+    const o=result.order;
+    $('trackresult').replaceChildren();
+    const lines=[
+      'Status: '+o.status,
+      'Pembayaran: '+o.payment_status,
+      o.phone?'Nomor: '+o.phone:'',
+      o.otp?'Kode OTP: '+o.otp:''
+    ].filter(Boolean);
+    lines.forEach(line=>{const p=document.createElement('p');p.textContent=line;$('trackresult').append(p)});
+  } catch(e){$('trackresult').textContent=e.message}
+}
+
+async function loadOrders() {
+  try {
+    const result=await api('/api/admin',{headers:{Authorization:'Bearer '+$('token').value}});
+    const root=$('adminresult');root.replaceChildren();
+    const table=document.createElement('table');
+    table.innerHTML='<thead><tr><th>Pesanan</th><th>Status</th><th>Aksi</th></tr></thead>';
+    const tbody=document.createElement('tbody');
+    result.orders.forEach(o=>{
+      const tr=document.createElement('tr');
+      const detail=document.createElement('td');
+      detail.textContent=o.id+' · '+o.customer_name+' · Rp '+Number(o.price).toLocaleString('id-ID');
+      const status=document.createElement('td');
+      status.textContent=o.payment_status+' / '+o.order_status;
+      const actions=document.createElement('td');
+      if(o.payment_status==='pending'){
+        ['approve','reject'].forEach(action=>{
+          const b=document.createElement('button');
+          b.className='secondary';b.textContent=action==='approve'?'Setujui':'Tolak';
+          b.onclick=async()=>{
+            try{
+              await api('/api/admin',{method:'POST',
+                headers:{Authorization:'Bearer '+$('token').value},
+                body:JSON.stringify({id:o.id,action})});
+              await loadOrders();
+            }catch(e){alert(e.message)}
+          };
+          actions.append(b);
+        });
+      }
+      tr.append(detail,status,actions);tbody.append(tr);
+    });
+    table.append(tbody);root.append(table);
+  } catch(e){$('adminresult').textContent=e.message}
+}
+
+loadCatalog();
+</script>
+</body>
+</html>
